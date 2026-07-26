@@ -1,63 +1,143 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { gsap, useGSAP } from "@/lib/gsap";
+import { ScrollTrigger } from "@/lib/gsap";
 import { AnimatedText } from "@/components/AnimatedText/AnimatedText";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { gallery } from "@/lib/content";
-import { cn } from "@/lib/utils";
+import { clamp } from "@/lib/utils";
 
-/** Section 7: animated masonry-ish grid with staggered reveal. */
+/** Columns alternate a stacked pair of narrow frames with one large frame,
+ *  consuming all 11 photos: 4 pairs (8 photos) + 3 large (3 photos). */
+const COLUMNS = [
+    { type: "pair" as const, items: [gallery[0], gallery[1]] },
+    { type: "large" as const, items: [gallery[2]] },
+    { type: "pair" as const, items: [gallery[3], gallery[4]] },
+    { type: "large" as const, items: [gallery[5]] },
+    { type: "pair" as const, items: [gallery[6], gallery[7]] },
+    { type: "large" as const, items: [gallery[8]] },
+    { type: "pair" as const, items: [gallery[9], gallery[10]] },
+];
+
+/**
+ * Section 7: a horizontal filmstrip instead of a grid. The whole page keeps
+ * scrolling vertically, but that scroll drives the strip sideways — one
+ * column at a time slides into frame, and whichever column is nearest
+ * centre reads as "in focus" (full size/opacity; neighbours dim and shrink
+ * slightly). Under reduced motion it falls back to a plain wrapping row.
+ */
 export function GallerySection() {
-  const root = useRef<HTMLDivElement>(null);
-  const reduced = usePrefersReducedMotion();
+    const triggerRef = useRef<HTMLElement>(null);
+    const trackRef = useRef<HTMLDivElement>(null);
+    const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const reduced = usePrefersReducedMotion();
 
-  useGSAP(
-    () => {
-      if (reduced || !root.current) return;
-      const items = gsap.utils.toArray<HTMLElement>(".gallery-item", root.current);
-      gsap.from(items, {
-        yPercent: 18,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out",
-        stagger: 0.12,
-        scrollTrigger: { trigger: root.current, start: "top 75%", once: true },
-      });
-    },
-    { scope: root, dependencies: [reduced] }
-  );
+    useEffect(() => {
+        if (reduced) return;
+        const track = trackRef.current;
+        const trg = triggerRef.current;
+        if (!track || !trg) return;
 
-  return (
-    <section id="gallery" className="wrap py-section">
-      <p className="eyebrow mb-6">
-        <span className="mr-2 text-ember">05</span> The gallery
-      </p>
-      <AnimatedText
-        as="h2"
-        text="Every angle of the obsession."
-        className="mb-[clamp(2rem,4vw,3.5rem)] block font-display text-fluid-h2 font-extrabold leading-[1.04]"
-      />
-      <div ref={root} className="grid grid-cols-2 gap-[clamp(0.6rem,1.5vw,1.1rem)] md:grid-cols-4">
-        {gallery.map((g, i) => (
-          <div
-            key={i}
-            className={cn(
-              "gallery-item relative overflow-hidden rounded-xl2 bg-panel",
-              i % 3 === 0 ? "col-span-2 aspect-[16/10]" : "aspect-square"
-            )}
-          >
-            <Image
-              src={g.src}
-              alt={g.alt}
-              fill
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-cover transition-transform duration-700 hover:scale-105"
-            />
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+        const st = ScrollTrigger.create({
+            trigger: trg,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: true,
+            onUpdate: (self) => {
+                const maxX = Math.max(0, track.scrollWidth - window.innerWidth);
+                const x = -clamp(self.progress) * maxX;
+                track.style.transform = `translateX(${x}px)`;
+
+                const viewportCenter = window.innerWidth / 2;
+                columnRefs.current.forEach((col) => {
+                    if (!col) return;
+                    const colCenter = col.offsetLeft + x + col.offsetWidth / 2;
+                    const dist = Math.abs(colCenter - viewportCenter) / viewportCenter;
+                    const focus = clamp(1 - dist * 0.9);
+                    col.style.opacity = String(0.4 + focus * 0.6);
+                    col.style.transform = `scale(${0.94 + focus * 0.06})`;
+                });
+            },
+        });
+
+        return () => st.kill();
+    }, [reduced]);
+
+    if (reduced) {
+        return (
+            <section id="gallery" className="wrap py-section">
+                <p className="eyebrow mb-6">
+                    <span className="mr-2 text-ember">05</span> The gallery
+                </p>
+                <AnimatedText
+                    as="h2"
+                    text="Every angle of the obsession."
+                    className="mb-[clamp(2rem,4vw,3.5rem)] block font-display text-fluid-h2 font-extrabold leading-[1.04]"
+                />
+                <div className="flex flex-wrap gap-[clamp(0.6rem,1.5vw,1.1rem)]">
+                    {gallery.map((g) => (
+                        <div key={g.src} className="relative aspect-square w-[calc(50%-0.5rem)] overflow-hidden rounded-xl2 bg-panel sm:w-[calc(25%-0.75rem)]">
+                            <Image src={g.src} alt={g.alt} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" />
+                        </div>
+                    ))}
+                </div>
+            </section>
+        );
+    }
+
+    return (
+        <section id="gallery" ref={triggerRef} className="relative h-[350vh]">
+            <div className="sticky top-0 h-[100svh] overflow-hidden bg-base">
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] px-gutter pt-[max(6.5rem,env(safe-area-inset-top))]">
+                    <div className="max-w-[24ch]">
+                        <p className="eyebrow mb-6">
+                            <span className="mr-2 text-ember">05</span> The gallery
+                        </p>
+                        <AnimatedText
+                            as="h2"
+                            text="Every angle of the obsession."
+                            className="block font-display text-fluid-h2 font-extrabold leading-[1.04]"
+                        />
+                    </div>
+                </div>
+
+                <div className="absolute inset-0 flex items-center overflow-hidden pl-gutter">
+                    <div
+                        ref={trackRef}
+                        className="gallery-track flex items-center gap-[3vw] will-change-transform"
+                        style={{ paddingLeft: "38vw" }}
+                    >
+                        {COLUMNS.map((col, i) => (
+                            <div
+                                key={col.items.map((it) => it.src).join("+")}
+                                ref={(el) => {
+                                    columnRefs.current[i] = el;
+                                }}
+                                className="gallery-col flex h-[58vh] flex-shrink-0 flex-col gap-[2vh] will-change-transform"
+                                style={{ width: col.type === "large" ? "34vw" : "20vw" }}
+                            >
+                                {col.items.map((it) => (
+                                    <div key={it.src} className="relative flex-1 overflow-hidden rounded-xl2 bg-panel">
+                                        <Image
+                                            src={it.src}
+                                            alt={it.alt}
+                                            fill
+                                            sizes="40vw"
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-[38vw] bg-gradient-to-r from-base via-base/80 to-transparent"
+                />
+            </div>
+        </section>
+    );
 }

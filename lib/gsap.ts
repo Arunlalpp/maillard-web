@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 
 // Register plugins exactly once, on the client.
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, useGSAP);
+    gsap.registerPlugin(ScrollTrigger, useGSAP);
 }
 
 export { gsap, ScrollTrigger, useGSAP };

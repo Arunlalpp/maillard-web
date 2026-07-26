@@ -10,19 +10,19 @@ import { CtaSection } from "@/components/sections/CtaSection";
 import { Footer } from "@/components/Footer/Footer";
 
 export default function Home() {
-  return (
-    <>
-      <Preloader />
-      <span id="top" aria-hidden />
-      <Hero />
-      <StorySection />
-      <ShowcaseSection />
-      <InteractiveSection />
-      <FeaturesSection />
-      <StatsSection />
-      <GallerySection />
-      <CtaSection />
-      <Footer />
-    </>
-  );
+    return (
+        <>
+            <Preloader />
+            <span id="top" aria-hidden />
+            <Hero />
+            <StorySection />
+            <ShowcaseSection />
+            <InteractiveSection />
+            <FeaturesSection />
+            <StatsSection />
+            <GallerySection />
+            <CtaSection />
+            <Footer />
+        </>
+    );
 }

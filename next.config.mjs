@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   // three / drei ship ESM that benefits from transpilation in Next
-  transpilePackages: ["three", "@react-three/fiber", "@react-three/drei", "@react-three/postprocessing"],
+  transpilePackages: ["three", "@react-three/fiber"],
   images: {
     formats: ["image/avif", "image/webp"],
   },
