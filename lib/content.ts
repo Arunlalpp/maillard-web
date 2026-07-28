@@ -41,3 +41,19 @@ export const gallery = [
     { src: "/images/interactive/interactive-10.jpeg", alt: "Cheese pulling from the burger mid-bite." },
     { src: "/images/interactive/interactive-11.jpeg", alt: "A close-up bite, melted cheddar stretching." },
 ];
+
+/** Portrait crops of the same build, for the mobile gallery filmstrip. */
+export const galleryMobile = [
+    { src: "/images/interactive-mobile/interactive-mobile-01.jpeg", alt: "Ingredients suspended above the plate before assembly." },
+    { src: "/images/interactive-mobile/interactive-mobile-02.jpeg", alt: "The stack floating mid-air, steam rising off the patty." },
+    { src: "/images/interactive-mobile/interactive-mobile-04.jpeg", alt: "The finished cheeseburger plated with fries and a beer." },
+    { src: "/images/interactive-mobile/interactive-mobile-05.jpeg", alt: "A skewered burger, steam still rising off the crust." },
+    { src: "/images/interactive-mobile/interactive-mobile-06.jpeg", alt: "The full stack plated, onion rings on top." },
+    { src: "/images/interactive-mobile/interactive-mobile-07.jpeg", alt: "A close side profile of the burger and fries." },
+    { src: "/images/interactive-mobile/interactive-mobile-08.jpeg", alt: "The plated burger against a rustic wood table." },
+    { src: "/images/interactive-mobile/interactive-mobile-09.jpeg", alt: "A hand lifting the burger for the first bite." },
+    { src: "/images/interactive-mobile/interactive-mobile-10.jpeg", alt: "Cheese pulling from the burger mid-bite." },
+    { src: "/images/interactive-mobile/interactive-mobile-11.jpeg", alt: "A close-up bite, melted cheddar stretching." },
+    { src: "/images/interactive-mobile/interactive-mobile-12.jpeg", alt: "Another angle on the bite, crust and crumb visible." },
+    { src: "/images/interactive-mobile/interactive-mobile-13.jpeg", alt: "The last bite, cheese still stretching to the plate." },
+];
