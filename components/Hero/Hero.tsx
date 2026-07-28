@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { AnimatedText } from "@/components/AnimatedText/AnimatedText";
 import { useScrollScrub } from "@/hooks/useScrollScrub";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { brand } from "@/lib/content";
 import { clamp } from "@/lib/utils";
 
@@ -22,6 +23,9 @@ export function Hero() {
     const fillRef = useRef<HTMLSpanElement>(null);
     const tcRef = useRef<HTMLSpanElement>(null);
     const reduced = usePrefersReducedMotion();
+    // Only picks which pre-cropped source plays — the scroll-scrub behaviour
+    // itself stays identical on mobile and desktop (see `reduced` below).
+    const isMobile = useIsMobile();
 
     const onProgress = useCallback((p: number) => {
         const fade = 1 - clamp(p / 0.16);
@@ -71,8 +75,7 @@ export function Hero() {
             >
                 <video
                     ref={videoRef}
-                    src="/videos/scrub.mp4"
-                    poster="/images/hero-poster.jpg"
+                    poster={isMobile ? "/images/hero-poster-mobile.jpg" : "/images/hero-poster-desktop.jpg"}
                     muted
                     playsInline
                     webkit-playsinline="true"
@@ -80,7 +83,17 @@ export function Hero() {
                     disablePictureInPicture
                     aria-label="A cheeseburger assembling layer by layer, then lifted by hand and bitten into."
                     className="absolute inset-0 h-full w-full object-cover [object-position:50%_42%]"
-                />
+                >
+                    {/*
+                        Native <source media> instead of a JS-picked `src`: the browser
+                        resolves this once at load and never swaps it later. A live src
+                        swap resets the element mid-session (duration/readyState briefly
+                        go to NaN/0), which poisons useScrollScrub's eased currentTime
+                        accumulator permanently — that's what broke scrubbing on mobile.
+                    */}
+                    <source src="/videos/scrub-mobile.mp4" media="(max-width: 768px), (pointer: coarse)" type="video/mp4" />
+                    <source src="/videos/scrub-desktop.mp4" type="video/mp4" />
+                </video>
 
                 {/* atmosphere */}
                 <div

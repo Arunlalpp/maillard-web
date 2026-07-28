@@ -44,6 +44,12 @@ export function useScrollScrub({
 
         const onMeta = () => {
             readyRef.current = Number.isFinite(vid.duration) && vid.duration > 0;
+            // Reset the eased accumulator too: if the element's resource was ever
+            // reloaded mid-session, duration briefly reports NaN, and NaN entering
+            // this lerp via `+=` poisons it permanently (NaN arithmetic never
+            // recovers), silently freezing the seek forever.
+            currentRef.current = 0;
+            seekingRef.current = false;
             try {
                 vid.pause();
                 vid.currentTime = 0;
@@ -74,7 +80,7 @@ export function useScrollScrub({
             const p = progressRef.current;
             onProgress?.(p);
 
-            if (!readyRef.current) return;
+            if (!readyRef.current || !Number.isFinite(vid.duration)) return;
 
             const target = p * vid.duration;
             currentRef.current += (target - currentRef.current) * ease;

@@ -20,16 +20,17 @@ npm run typecheck # tsc --noEmit
 
 ## Your videos
 
-Three files live in `public/videos/`:
+Files live in `public/videos/`:
 
-- `scrub.mp4` — the hero scrub source. It's a concatenation of your two clips (stacking → pickup), re-encoded to an **all-keyframe** file so seeking is instant. To regenerate from new footage:
+- `scrub-desktop.mp4` / `scrub-mobile.mp4` — the hero scrub sources (landscape and portrait crops of the same take: ingredients assemble, then a hand lifts and bites it), each re-encoded to an **all-keyframe** file so seeking is instant. `Hero.tsx` picks between them via `useIsMobile()` — only the source changes per device, the scroll-scrub behaviour itself is identical on mobile and desktop. Matching posters live at `public/images/hero-poster-desktop.jpg` / `hero-poster-mobile.jpg`. To regenerate from new footage:
 
   ```bash
-  ffmpeg -i clip1.mp4 -i clip2.mp4 -filter_complex \
-    "[0:v]scale=1280:-2,fps=30,setsar=1[a];[1:v]scale=1280:-2,fps=30,setsar=1[b];[a][b]concat=n=2:v=1:a=0[v]" \
-    -map "[v]" -an -c:v libx264 -preset slow -crf 20 \
-    -x264-params "keyint=1:min-keyint=1:scenecut=0" -movflags +faststart public/videos/scrub.mp4
+  ffmpeg -i source.mp4 -an -pix_fmt yuv420p -profile:v high \
+    -g 1 -keyint_min 1 -sc_threshold 0 -bf 0 \
+    -crf 20 -preset slow -movflags +faststart public/videos/scrub-desktop.mp4
   ```
+
+  Verify the re-encode is actually all-keyframe before shipping — `ffprobe -select_streams v:0 -show_entries frame=pict_type -of csv in.mp4 | sort | uniq -c` should show only `I` frames. A normal GOP structure (occasional keyframes with P/B frames between) seeks visibly janky under scroll-scrub.
 
 - `stacking.mp4`, `pickup.mp4` — the originals, used by the `VideoSection` showcase.
 
@@ -68,4 +69,4 @@ store/               useUIStore (zustand)
 
 ## Performance notes
 
-Built for a high Lighthouse score — dynamic imports for WebGL, lazy video, `frameloop` gating, DPR clamps, memoized geometry, reduced-motion fast paths, `next/font`, and `next/image` for the gallery. The actual score depends on your hosting, network, and final asset weights (the hero `scrub.mp4` is ~18 MB; consider a shorter clip or adaptive sources for mobile). Benchmark on your target environment.
+Built for a high Lighthouse score — dynamic imports for WebGL, lazy video, `frameloop` gating, DPR clamps, memoized geometry, reduced-motion fast paths, `next/font`, and `next/image` for the gallery. The actual score depends on your hosting, network, and final asset weights (the hero videos are ~10 MB each, one loaded per device via adaptive sources). Benchmark on your target environment.
